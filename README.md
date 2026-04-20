@@ -1,6 +1,6 @@
 # CompactSerializer
 
-A small, schema-aware binary serializer for .NET. It trades JSON’s self-describing text for a compact layout: fixed field order, length-prefixed strings and byte arrays, and variable-length integer encoding where it helps. The result is typically smaller payloads and less parsing overhead than `System.Text.Json` for the same POCO graphs—at the cost of a custom, non-human-readable format.
+A small, schema-aware binary serializer for .NET. It trades JSON’s self-describing text for a compact layout: fixed field order, length-prefixed strings and byte arrays, and variable-length integer encoding where it helps. The result is typically smaller payloads and less parsing overhead than `System.Text.Json` for the same POCO graphs at the cost of a custom, non-human-readable format.
 
 The companion demo project compares payload size and rough serialize/deserialize throughput across CompactSerializer, `System.Text.Json`, and MessagePack on a large synthetic model.
 
@@ -48,7 +48,7 @@ public sealed class Example
 
 Constructors: complex types must expose a public parameterless constructor.
 
-Reference types: nullable reference semantics apply—reference types are written with a 1-byte presence flag before the value when null is allowed. The root `T` in `Deserialize<T>` is still validated as non-null when `T` is a non-nullable reference type.
+Reference types: nullable reference semantics apply, reference types are written with a 1-byte presence flag before the value when null is allowed. The root `T` in `Deserialize<T>` is still validated as non-null when `T` is a non-nullable reference type.
 
 ## Supported types
 
@@ -85,4 +85,4 @@ dotnet build src/CompactSerializer.sln
 
 - Format versioning is not built in; changing property order, types, or serializer behavior breaks interoperability with old payloads.
 - Security: this is not a hardened interchange format. Do not deserialize untrusted data without threat modeling (no built-in schema or type IDs in the stream).
-- Scope: intentionally narrow—good for internal services or caches where you control both ends and want smaller/faster serialization than JSON for compatible models.
+- Scope: intentionally narrow, good for internal services or caches where you control both ends and want smaller/faster serialization than JSON for compatible models.
