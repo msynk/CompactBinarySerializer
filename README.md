@@ -1,31 +1,34 @@
 # CompactBinarySerializer
 
-A small, schema-aware binary serializer for .NET. It trades JSON's self-describing text for a compact layout: fixed field order, length-prefixed strings and byte arrays, and variable-length integer encoding where it helps. The result is typically smaller payloads and less parsing overhead than `System.Text.Json` for the same POCO graphs at the cost of a custom, non-human-readable format.
+[![NuGet](https://img.shields.io/nuget/v/CompactBinarySerializer.svg)](https://www.nuget.org/packages/CompactBinarySerializer)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/CompactBinarySerializer.svg)](https://www.nuget.org/packages/CompactBinarySerializer)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-The companion demo project compares payload size and rough serialize/deserialize throughput across CompactBinarySerializer, `System.Text.Json`, and MessagePack on a large synthetic model.
+A small, schema-aware binary serializer for .NET. It trades JSON's self-describing text for a compact layout: fixed field order, length-prefixed strings and byte arrays, and variable-length integer encoding where it helps. The result is typically smaller payloads and less parsing overhead than `System.Text.Json` for the same POCO graphs at the cost of a custom, non-human-readable format.
 
 ## Requirements
 
-- [.NET 10](https://dotnet.microsoft.com/) SDK (preview builds are fine if that is what you use locally)
+- .NET 10 or later
 
-## Repository layout
+## Installation
 
-| Path | Purpose |
-|------|---------|
-| `src/CompactBinarySerializer/` | Library: `CompactBinarySerializer`, `SyncOrderAttribute`, readers/writers |
-| `src/CompactBinarySerializer.Demo/` | Console app: sample models, benchmark vs JSON and MessagePack |
-| `src/CompactBinarySerializer.Tests/` | xUnit test project: functional, error-path, payload-size, and performance-smoke coverage |
-| `src/CompactBinarySerializer.sln` | Solution |
+```bash
+dotnet add package CompactBinarySerializer
+```
+
+Or via the NuGet Package Manager in Visual Studio, or by adding directly to your `.csproj`:
+
+```xml
+<PackageReference Include="CompactBinarySerializer" Version="0.1.0" />
+```
 
 ## Quick start
 
-Add a project reference to `src/CompactBinarySerializer/CompactBinarySerializer.csproj`, then:
-
 ```csharp
-using CompactBinarySerializer;
+using static CompactBinarySerializer.CompactBinarySerializer;
 
-var bytes = CompactBinarySerializer.Serialize(myObject);
-var copy = CompactBinarySerializer.Deserialize<MyType>(bytes);
+var bytes = Serialize(myObject);
+var copy = Deserialize<MyType>(bytes);
 ```
 
 Root values passed to `Serialize` must not be null. For `Deserialize<T>`, the payload must not be empty; if deserialization yields null for a non-nullable `T`, an exception is thrown.
@@ -66,29 +69,38 @@ Wire encoding is internal; treat payloads as opaque unless you are maintaining t
 
 Types outside this set are not supported and will fail at runtime when encountered.
 
-## Demo
+## Limitations and stability
 
-From the repository root:
+- Format versioning is not built in; changing property order, types, or serializer behavior breaks interoperability with old payloads.
+- Security: this is not a hardened interchange format. Do not deserialize untrusted data without threat modeling (no built-in schema or type IDs in the stream).
+- Scope: intentionally narrow, good for internal services or caches where you control both ends and want smaller/faster serialization than JSON for compatible models.
 
-```bash
-dotnet run --project src/CompactBinarySerializer.Demo/CompactBinarySerializer.Demo.csproj
-```
+## Contributing
 
-The demo prints JSON vs CompactBinarySerializer vs MessagePack byte counts, checks CompactBinarySerializer and MessagePack round-trips, then runs a simple multi-round benchmark for serialize/deserialize performance across all three serializers (not a substitute for [BenchmarkDotNet](https://github.com/dotnet/BenchmarkDotNet), but useful for a quick sanity check).
+The repository includes a companion demo project and a full xUnit test suite. Clone the repo and see the sections below for getting started.
 
-## Building
+### Repository layout
+
+| Path | Purpose |
+|------|---------|
+| `src/CompactBinarySerializer/` | Library source |
+| `src/CompactBinarySerializer.Demo/` | Console app: benchmark vs JSON and MessagePack |
+| `src/CompactBinarySerializer.Tests/` | xUnit test project |
+| `src/CompactBinarySerializer.sln` | Solution |
+
+### Building
 
 ```bash
 dotnet build src/CompactBinarySerializer.sln
 ```
 
-## Running tests
+### Running tests
 
 ```bash
 dotnet test src/CompactBinarySerializer.sln
 ```
 
-The test project includes broad serializer coverage:
+The test project includes:
 
 - Round-trip correctness for primitives, nested objects, arrays, and lists
 - Nullability and guardrail behavior (null roots, empty/truncated payloads)
@@ -96,23 +108,14 @@ The test project includes broad serializer coverage:
 - Payload-size sanity check against JSON for a representative model
 - Performance smoke checks for serialize/deserialize loops
 
-## NuGet packaging
-
-Create NuGet package artifacts:
+### Running the demo
 
 ```bash
-dotnet pack src/CompactBinarySerializer/CompactBinarySerializer.csproj -c Release -o artifacts
+dotnet run --project src/CompactBinarySerializer.Demo/CompactBinarySerializer.Demo.csproj
 ```
 
-Publish to NuGet.org (replace with your API key):
+The demo prints byte counts and runs a multi-round benchmark comparing CompactBinarySerializer, `System.Text.Json`, and MessagePack.
 
-```bash
-dotnet nuget push artifacts/CompactBinarySerializer.1.0.0.nupkg --api-key <NUGET_API_KEY> --source https://api.nuget.org/v3/index.json
-dotnet nuget push artifacts/CompactBinarySerializer.1.0.0.snupkg --api-key <NUGET_API_KEY> --source https://api.nuget.org/v3/index.json
-```
+## License
 
-## Limitations and stability
-
-- Format versioning is not built in; changing property order, types, or serializer behavior breaks interoperability with old payloads.
-- Security: this is not a hardened interchange format. Do not deserialize untrusted data without threat modeling (no built-in schema or type IDs in the stream).
-- Scope: intentionally narrow, good for internal services or caches where you control both ends and want smaller/faster serialization than JSON for compatible models.
+[MIT](LICENSE)
